@@ -1,0 +1,16 @@
+app = "a11yfix"
+primary_region = "sin"  # Singapore — closest to India
+
+[build]
+
+[http_service]
+  internal_port = 8501
+  force_https = true
+  auto_stop_machines = false   # keep it always-on (free tier allows this)
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

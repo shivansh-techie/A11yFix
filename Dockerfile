@@ -25,7 +25,7 @@ COPY . .
 
 RUN mkdir -p data static
 
-EXPOSE 8000 8501
+EXPOSE 8501
 
 COPY supervisord.conf /etc/supervisor/conf.d/a11yfix.conf
 
