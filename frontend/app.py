@@ -10,6 +10,11 @@ st.set_page_config(
     page_title="A11yFix — AI Accessibility Auditor",
     page_icon="🛡️",
     layout="wide",
+    menu_items={
+        "About": "**A11yFix** — AI-powered WCAG 2.1 Accessibility Auditor\n\nBy Kunal Chauhan for MUIT",
+        "Get help": None,
+        "Report a bug": None,
+    },
 )
 
 # ---------------------------------------------------------------------------
