@@ -21,8 +21,13 @@ st.set_page_config(
 # ---------------------------------------------------------------------------
 st.markdown("""
 <style>
-/* hide streamlit status widget (cycling spinner) */
-[data-testid="stStatusWidget"] { visibility: hidden; }
+/* hide cycling/swimming running icons */
+[data-testid="stStatusWidget"] { display: none !important; }
+
+/* hide "Made with Streamlit" branding inside the About dialog */
+[data-testid="stModal"] a[href*="streamlit"],
+[data-testid="stModal"] p:has(a[href*="streamlit"]),
+[data-testid="stModal"] div:has(> a[href*="streamlit"]) { display: none !important; }
 
 /* clean top bar */
 header[data-testid="stHeader"] { background: transparent; }
