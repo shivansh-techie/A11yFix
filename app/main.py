@@ -176,6 +176,18 @@ def export_pdf(scan_id: int, db: Session = Depends(get_session)):
     )
 
 
+@app.delete("/api/scans/{scan_id}")
+def delete_scan(scan_id: int, db: Session = Depends(get_session)):
+    scan = db.get(Scan, scan_id)
+    if not scan:
+        raise HTTPException(404, "not found")
+    for v in db.exec(select(Violation).where(Violation.scan_id == scan_id)).all():
+        db.delete(v)
+    db.delete(scan)
+    db.commit()
+    return {"ok": True}
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}

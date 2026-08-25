@@ -12,6 +12,14 @@ st.set_page_config(
     layout="wide",
 )
 
+# hide Streamlit's default cycling/running decorator; use a clean toolbar
+st.markdown("""
+<style>
+[data-testid="stStatusWidget"] { display: none; }
+header[data-testid="stHeader"] { background: transparent; }
+</style>
+""", unsafe_allow_html=True)
+
 IMPACT_ICON = {"critical": "🔴", "serious": "🟠", "moderate": "🟡", "minor": "🔵"}
 IMPACT_ORDER = {"critical": 0, "serious": 1, "moderate": 2, "minor": 3}
 
@@ -20,6 +28,9 @@ st.markdown(
     "<p style='color:gray;margin-top:0'>AI-powered WCAG 2.1 Accessibility Auditor</p>",
     unsafe_allow_html=True,
 )
+
+if "history_selected" not in st.session_state:
+    st.session_state.history_selected = None
 
 tab_scan, tab_history = st.tabs(["🔍 New Scan", "📋 Scan History"])
 
@@ -50,7 +61,6 @@ def show_results(data):
             st.markdown(f"`Rule:` **{v['rule_id']}** &nbsp;|&nbsp; `Target:` `{v['target']}`", unsafe_allow_html=True)
             if v["wcag_tags"]:
                 st.caption(f"WCAG criteria: {v['wcag_tags']}")
-
             left, right = st.columns(2)
             with left:
                 st.markdown("**Offending HTML**")
@@ -75,6 +85,10 @@ def show_results(data):
     except Exception as e:
         st.warning(f"PDF export unavailable: {e}")
 
+
+# ---------------------------------------------------------------------------
+# New Scan tab
+# ---------------------------------------------------------------------------
 
 with tab_scan:
     with st.form("scan_form"):
@@ -121,9 +135,27 @@ with tab_scan:
                 st.error("Timed out — the site may be too slow or unreachable.")
 
 
+# ---------------------------------------------------------------------------
+# History tab
+# ---------------------------------------------------------------------------
+
 with tab_history:
-    if st.button("🔄 Refresh"):
-        st.rerun()
+    col_ref, col_clear = st.columns([1, 1])
+    with col_ref:
+        if st.button("🔄 Refresh"):
+            st.session_state.history_selected = None
+            st.rerun()
+    with col_clear:
+        if st.button("🗑️ Clear All History", type="secondary"):
+            try:
+                all_scans = httpx.get(f"{API}/api/scans", timeout=10).json()
+                for s in all_scans:
+                    httpx.delete(f"{API}/api/scans/{s['id']}", timeout=10)
+                st.session_state.history_selected = None
+                st.success("History cleared.")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Failed: {e}")
 
     try:
         history = httpx.get(f"{API}/api/scans", timeout=10).json()
@@ -140,11 +172,28 @@ with tab_history:
             ts = (entry.get("timestamp") or "")[:19].replace("T", " ")
             badge = {"completed": "✅", "failed": "❌", "running": "⏳", "pending": "🕐"}.get(entry["status"], "❓")
 
-            with st.expander(f"{badge} {entry['url']}  —  {score_str}  |  {ts}", expanded=False):
-                st.write(f"Violations: {entry['violation_count']}  |  Status: {entry['status']}")
-                if st.button("Load results", key=f"load_{entry['id']}"):
+            c1, c2, c3 = st.columns([6, 1, 1])
+            with c1:
+                st.markdown(f"{badge} **{entry['url']}** — {score_str} | {entry['violation_count']} violations | {ts}")
+            with c2:
+                if st.button("View", key=f"view_{entry['id']}"):
+                    st.session_state.history_selected = entry["id"]
+            with c3:
+                if st.button("🗑️", key=f"del_{entry['id']}", help="Delete this scan"):
                     try:
-                        full = httpx.get(f"{API}/api/scans/{entry['id']}", timeout=10).json()
-                        show_results(full)
+                        httpx.delete(f"{API}/api/scans/{entry['id']}", timeout=10)
+                        if st.session_state.history_selected == entry["id"]:
+                            st.session_state.history_selected = None
+                        st.rerun()
                     except Exception as e:
-                        st.error(f"Failed: {e}")
+                        st.error(f"Delete failed: {e}")
+            st.divider()
+
+        # render selected scan results OUTSIDE any expander
+        if st.session_state.history_selected:
+            try:
+                full = httpx.get(f"{API}/api/scans/{st.session_state.history_selected}", timeout=10).json()
+                st.markdown(f"### Results for {full['url']}")
+                show_results(full)
+            except Exception as e:
+                st.error(f"Failed to load results: {e}")
