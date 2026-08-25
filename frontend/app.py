@@ -109,7 +109,7 @@ st.markdown("""
     <div class="a11y-icon">🛡️</div>
     <div>
         <h1>A11yFix</h1>
-        <p>AI-powered WCAG 2.1 Accessibility Auditor · Powered by axe-core + Claude</p>
+        <p>AI-powered WCAG 2.1 Accessibility Auditor</p>
     </div>
 </div>
 """, unsafe_allow_html=True)
