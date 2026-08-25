@@ -13,7 +13,6 @@ st.set_page_config(
     menu_items={
         "About": "**A11yFix** — AI-powered WCAG 2.1 Accessibility Auditor\n\nBy Kunal Chauhan for MUIT",
         "Get help": None,
-        "Report a bug": None,
     },
 )
 
