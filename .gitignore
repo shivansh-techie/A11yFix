@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+data/
+static/axe.min.js
+.DS_Store
+*.db
