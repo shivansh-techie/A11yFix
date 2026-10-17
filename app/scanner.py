@@ -30,11 +30,15 @@ async def _run(url: str, timeout_secs: int) -> dict:
         )
         page = await browser.new_page()
         try:
-            # domcontentloaded fires as soon as the DOM is parsed — axe-core
-            # only needs the DOM, not images/analytics, so this is both faster
-            # and more reliable than "load" on heavy sites (Wikipedia, etc.)
-            await page.goto(url, wait_until="domcontentloaded", timeout=timeout_secs * 1000)
-            await page.wait_for_timeout(500)
+            # Three-tier strategy: fast → permissive → give up
+            # 1. domcontentloaded in 15s (works for most sites)
+            # 2. commit (first-byte) in full timeout (slow/regional sites)
+            try:
+                await page.goto(url, wait_until="domcontentloaded", timeout=15_000)
+                await page.wait_for_timeout(500)
+            except Exception:
+                await page.goto(url, wait_until="commit", timeout=timeout_secs * 1000)
+                await page.wait_for_timeout(3000)
         except Exception as e:
             await browser.close()
             raise ValueError(f"Could not load page: {e}")
