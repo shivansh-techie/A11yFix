@@ -30,9 +30,12 @@ async def _run(url: str, timeout_secs: int) -> dict:
         )
         page = await browser.new_page()
         try:
-            # using "load" not "networkidle" — networkidle times out on sites
-            # with polling/websockets (learned this the hard way)
-            await page.goto(url, wait_until="load", timeout=timeout_secs * 1000)
+            # Try "load" first; fall back to "domcontentloaded" for heavy sites
+            # that keep long-polling/streaming (Wikipedia, news sites, etc.)
+            try:
+                await page.goto(url, wait_until="load", timeout=timeout_secs * 500)
+            except Exception:
+                await page.goto(url, wait_until="domcontentloaded", timeout=timeout_secs * 1000)
             await page.wait_for_timeout(1500)
         except Exception as e:
             await browser.close()
