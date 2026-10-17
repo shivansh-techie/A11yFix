@@ -235,8 +235,8 @@ with tab_scan:
 
             bar = st.progress(0, text=f"🔍 Scanning {url} …")
 
-            for tick in range(150):
-                time.sleep(2)
+            for tick in range(600):
+                time.sleep(0.5)
                 try:
                     poll = httpx.get(f"{API}/api/scans/{scan_id}", timeout=10).json()
                 except Exception:
